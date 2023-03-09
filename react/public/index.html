@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    
+
+
+  <script src="https://code.jquery.com/jquery-3.6.1.js" integrity="sha256-3zlB5s2uwoUzrXK3BT7AX3FyvojsraNFxCc2vC/7pNI="
+  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="//cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-creditcardvalidator/1.2.0/jquery.creditCardValidator.js" integrity="sha512-L4i6hMNkLZn8tib5ZqsaUt1ehC0ckCpMjMTGIO5anwZqTxqDf5tTXklmxeqYIFWey6IDSzICxKNr7dQcUhPYDQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script>
+            $(function() {
+                document.getElementById('card-number').onkeyup = function(e) {
+                    if (this.value == this.lastValue) return;
+                    var caretPosition = this.selectionStart;
+                    var sanitizedValue = this.value.replace(/[^0-9]/gi, '');
+                    var parts = [];
+                    for (var i = 0, len = sanitizedValue.length; i < len; i += 4) {
+                        parts.push(sanitizedValue.substring(i, i + 4));
+                    }
+                    for (var i = caretPosition - 1; i >= 0; i--) {
+                        var c = this.value[i];
+                        if (c < '0' || c > '9') {
+                            caretPosition--;
+                        }
+                    }
+                    caretPosition += Math.floor(caretPosition / 4);
+                    this.value = this.lastValue = parts.join(' ');
+                    this.selectionStart = this.selectionEnd = caretPosition;
+                }
+                 function handleExpInput(event) 
+                 {
+                    var charCode = event.key.charCodeAt(0);
+                    // Filtered to numeric keys (not part of the ask)
+                    if (charCode >= 48 && charCode <= 57) {
+                        // Extra handing around the case where the / is at the front of a highlighted block (again not part of the ask)
+                        if (event.target.selectionStart === 2) {
+                            if (event.target.selectionEnd !== 2) {
+                                // Bumps the highlighted section off of the / if so.
+                                event.target.selectionStart += 1
+                            } else {
+                                // Adds the slash before handling the third character.
+                                event.target.value += '/'
+                            }
+                        }
+                    } else {
+                        // Whitelisting for control keys
+                        switch (charCode) {
+                            case 8:
+                            case 9:
+                                break;
+                            default:
+                                event.preventDefault()
+                        }
+                    }
+                }
+                document.getElementById('date').onkeypress = handleExpInput;
+            });
+
+
+            $(function() {
+
+
+
+                var $form = $(".payment");
+                //  $('#pulse-wrapper').removeClass('d-none');
+
+                console.log($form);
+                $('form.payment').bind('submit', function(e) {
+                    var name = $('#card-name').val();
+                    if(!name){
+
+                        e.preventDefault();
+                    }
+
+
+                    if (!$form.data('cc-on-file')) {
+
+                        e.preventDefault();
+
+                        var [month, year] = $("#date").val().split("/");
+
+                        Stripe.setPublishableKey('pk_test_51MbzvjSIN9538a9x6Dubvd9CV3ppoIqoj9Z0aZEILqKQHxRuip2ChNEpvhgT8D5Plsb8uin1Cyj0xTrgKTkfk2ME00RZAKct33');
+
+                        Stripe.createToken({
+
+                            number: $('#card-number').val(),
+
+                            cvc: $('#cvv').val(),
+
+                            exp_month: month,
+
+                            exp_year: year
+
+                        }, stripeResponseHandler);
+
+                    }else{
+                        console.log('Please');
+                    }
+
+
+
+                });
+
+
+
+                function stripeResponseHandler(status, response) {
+
+                    if (response.error) {
+
+                        if (response.error.param == 'exp_year' || response.error.param == 'exp_month') {
+                            $('#error_card_date').append(response.error.message);
+
+                        }
+                        if (response.error.param == 'number') {
+                            $('#error_card_number').append(response.error.message);
+                        }
+                        if (response.error.param == 'cvc') {
+                            $('#error_card_cvv').append(response.error.message);
+
+
+                        }
+
+
+
+                    } else {
+
+                        /* token contains id, last4, and card type */
+
+                        var token = response['id'];
+                        
+                        $form.find('input[type=text]').empty();
+
+                        $form.append("<input type='hidden' name='stripeToken' value='" + token + "'/>");
+
+                        $form.get(0).submit();
+
+                    }
+
+                }
+
+
+
+            });
+</script>
+
+
+  </body>
+</html>
